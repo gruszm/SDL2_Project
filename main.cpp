@@ -28,14 +28,23 @@ int main(int argc, char **argv) {
     }
 
     SDL_Rect rec;
-    rec.x=40;
-    rec.y=60;
-    rec.w=400;
-    rec.h=300;
-    SDL_FillRect(surf,&rec,SDL_MapRGB(surf->format,20,120,50));
-    SDL_UpdateWindowSurface(window);
+    rec.x = 40;
+    rec.y = 60;
+    rec.w = 400;
+    rec.h = 300;
 
-    SDL_Delay(2000);
+    SDL_Event e;
+
+    bool quit = false;
+    while(!quit) {
+        while(SDL_PollEvent(&e) != 0) {
+            if(e.type == SDL_QUIT)
+                quit = true;
+        }
+        SDL_FillRect(surf, &rec, SDL_MapRGB(surf->format, 20, 120, 50));
+        SDL_UpdateWindowSurface(window);
+    }
+
     SDL_DestroyWindow(window);
     SDL_Quit();
 
