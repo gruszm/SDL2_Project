@@ -27,12 +27,6 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    SDL_Rect rec;
-    rec.x = 40;
-    rec.y = 60;
-    rec.w = 400;
-    rec.h = 300;
-
     SDL_Event e;
 
     bool quit = false;
@@ -41,7 +35,21 @@ int main(int argc, char **argv) {
             if(e.type == SDL_QUIT)
                 quit = true;
         }
-        SDL_FillRect(surf, &rec, SDL_MapRGB(surf->format, 20, 120, 50));
+
+        int colorShift = 0;
+
+        const Uint8* keys = SDL_GetKeyboardState(NULL);
+        if(keys[SDL_SCANCODE_LEFT])
+            colorShift -= 30;
+        if(keys[SDL_SCANCODE_RIGHT])
+            colorShift += 65;
+        if(keys[SDL_SCANCODE_UP])
+            colorShift -= 50;
+        if(keys[SDL_SCANCODE_DOWN])
+            colorShift += 90;
+
+        SDL_FillRect(surf, NULL, SDL_MapRGB(surf->format, 70 + colorShift, 120 + colorShift, 50 + colorShift));
+
         SDL_UpdateWindowSurface(window);
     }
 
