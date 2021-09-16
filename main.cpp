@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string>
 #include <SDL.h>
+#include <conio.h>
 
 #define WIDTH 800
 #define HEIGHT 600
@@ -59,18 +60,24 @@ bool loadMedia() {
 }
 
 int main(int argc, char **argv) {
-    if(!init())
+    if(!init()) {
+        getch();
         return -1;
+    }
 
     if(!loadMedia()) {
         close();
+        getch();
         return -2;
     }
 
     SDL_Event e;
 
+    SDL_Surface *temp = SDL_CreateRGBSurface(0, 40, 40, 32, 0, 0, 0, 0);
+
     bool quit = false;
     while(!quit) {
+
         while(SDL_PollEvent(&e) != 0) {
             if(e.type == SDL_QUIT)
                 quit = true;
@@ -91,6 +98,14 @@ int main(int argc, char **argv) {
             quit = true;
 
         SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 80 + colorShift, 180 - colorShift, 130 + colorShift));
+        SDL_FillRect(temp, NULL, SDL_MapRGB(temp->format, 40 + colorShift, 80 + colorShift, 120 - colorShift));
+
+        if(temp) {
+            SDL_Rect rec;
+            rec.x = 40;
+            rec.y = 40;
+            SDL_BlitSurface(temp, NULL, screen, &rec);
+        }
 
         SDL_UpdateWindowSurface(window);
     }
