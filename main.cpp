@@ -12,12 +12,14 @@ using namespace std;
 SDL_Window *window = NULL;
 SDL_Surface *screen = NULL;
 SDL_Surface *bmp = NULL;
-SDL_Surface *temp = NULL;
+SDL_Surface *square = NULL;
+SDL_Surface *player = NULL;
 
-bool init() ;
+bool init();
 void close();
-bool loadBMP(SDL_Surface *&surface, string path) ;
-bool loadMedia() ;
+bool loadBMP(SDL_Surface *&surface, string path);
+bool loadMedia();
+bool scaleImage(SDL_Surface *&original, int newWidth, int newHeight);
 
 int main(int argc, char **argv) {
     if(!init()) {
@@ -68,8 +70,7 @@ int main(int argc, char **argv) {
             quit = true;
 
         SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 80, 180, 130));
-
-        SDL_BlitSurface(temp, NULL, screen, &rec);
+        SDL_BlitSurface(player, NULL, screen, &rec);
 
         SDL_UpdateWindowSurface(window);
     }
@@ -82,6 +83,12 @@ int main(int argc, char **argv) {
 bool loadBMP(SDL_Surface *&surface, string path) {
     surface = SDL_LoadBMP(path.c_str());
     if(!surface) {
+        printf(SDL_GetError());
+        return false;
+    }
+    SDL_Surface *optimized = SDL_ConvertSurface(surface, surface->format, 0);
+    if(!optimized) {
+        SDL_FreeSurface(surface);
         printf(SDL_GetError());
         return false;
     }
@@ -110,8 +117,11 @@ void close() {
     SDL_FreeSurface(bmp);
     bmp = NULL;
 
-    SDL_FreeSurface(temp);
-    temp = NULL;
+    SDL_FreeSurface(square);
+    square = NULL;
+
+    SDL_FreeSurface(player);
+    player = NULL;
 
     SDL_DestroyWindow(window);
     window = NULL;
@@ -124,9 +134,39 @@ bool loadMedia() {
 
     if(!loadBMP(bmp, "alamakota.bmp"))
         is_good = false;
+    if(!loadBMP(player, "player.bmp"))
+        is_good = false;
+    if(!scaleImage(player,96,48))
+        is_good=false;
 
-    temp = SDL_CreateRGBSurface(0, 40, 40, 32, 0, 0, 0, 0);
-    SDL_FillRect(temp, NULL, SDL_MapRGB(temp->format, 40, 80, 120));
+    square = SDL_CreateRGBSurface(0, 40, 40, 32, 0, 0, 0, 0);
+    SDL_FillRect(square, NULL, SDL_MapRGB(square->format, 40, 80, 120));
 
     return is_good;
+}
+
+bool scaleImage(SDL_Surface *&og, int newWidth, int newHeight) {
+    SDL_Surface *newImage = SDL_CreateRGBSurface(0, newWidth, newHeight, 32, og->format->Rmask, og->format->Gmask, og->format->Bmask, og->format->Amask);
+
+    if(!newImage) {
+        printf("Image could not be scaled: %s", SDL_GetError());
+        return false;
+    }
+
+    SDL_Rect rec;
+    rec.x = 0;
+    rec.y = 0;
+    rec.w = newWidth;
+    rec.h = newHeight;
+
+    if(SDL_BlitScaled(og, NULL, newImage, &rec)<0){
+        SDL_FreeSurface(newImage);
+        printf("Image could not be scaled: %s", SDL_GetError());
+        return false;
+    }
+
+    SDL_FreeSurface(og);
+    og = newImage;
+
+    return true;
 }
