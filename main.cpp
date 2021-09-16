@@ -12,6 +12,72 @@ using namespace std;
 SDL_Window *window = NULL;
 SDL_Surface *screen = NULL;
 SDL_Surface *bmp = NULL;
+SDL_Surface *temp = NULL;
+
+bool init() ;
+void close();
+bool loadBMP(SDL_Surface *&surface, string path) ;
+bool loadMedia() ;
+
+int main(int argc, char **argv) {
+    if(!init()) {
+        getch();
+        return -1;
+    }
+
+    if(!loadMedia()) {
+        close();
+        getch();
+        return -2;
+    }
+
+    SDL_Event e;
+
+    SDL_Rect rec;
+    rec.x = 40;
+    rec.y = 40;
+
+    bool quit = false;
+    while(!quit) {
+
+        while(SDL_PollEvent(&e) != 0) {
+            if(e.type == SDL_QUIT)
+                quit = true;
+        }
+
+        int colorShift = 0;
+        const Uint8* keys = SDL_GetKeyboardState(NULL);
+
+        if(keys[SDL_SCANCODE_LEFT]) {
+            colorShift -= 30;
+            rec.x--;
+        }
+        if(keys[SDL_SCANCODE_RIGHT]) {
+            colorShift += 65;
+            rec.x++;
+        }
+        if(keys[SDL_SCANCODE_UP]) {
+            colorShift -= 50;
+            rec.y--;
+        }
+        if(keys[SDL_SCANCODE_DOWN]) {
+            colorShift += 90;
+            rec.y++;
+        }
+        if(keys[SDL_SCANCODE_ESCAPE])
+            quit = true;
+
+        SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 80, 180, 130));
+
+        SDL_BlitSurface(temp, NULL, screen, &rec);
+
+        SDL_UpdateWindowSurface(window);
+    }
+
+    close();
+    return 0;
+}
+
 
 bool loadBMP(SDL_Surface *&surface, string path) {
     surface = SDL_LoadBMP(path.c_str());
@@ -44,6 +110,9 @@ void close() {
     SDL_FreeSurface(bmp);
     bmp = NULL;
 
+    SDL_FreeSurface(temp);
+    temp = NULL;
+
     SDL_DestroyWindow(window);
     window = NULL;
 
@@ -56,60 +125,8 @@ bool loadMedia() {
     if(!loadBMP(bmp, "alamakota.bmp"))
         is_good = false;
 
+    temp = SDL_CreateRGBSurface(0, 40, 40, 32, 0, 0, 0, 0);
+    SDL_FillRect(temp, NULL, SDL_MapRGB(temp->format, 40, 80, 120));
+
     return is_good;
-}
-
-int main(int argc, char **argv) {
-    if(!init()) {
-        getch();
-        return -1;
-    }
-
-    if(!loadMedia()) {
-        close();
-        getch();
-        return -2;
-    }
-
-    SDL_Event e;
-
-    SDL_Surface *temp = SDL_CreateRGBSurface(0, 40, 40, 32, 0, 0, 0, 0);
-
-    bool quit = false;
-    while(!quit) {
-
-        while(SDL_PollEvent(&e) != 0) {
-            if(e.type == SDL_QUIT)
-                quit = true;
-        }
-
-        int colorShift = 0;
-
-        const Uint8* keys = SDL_GetKeyboardState(NULL);
-        if(keys[SDL_SCANCODE_LEFT])
-            colorShift -= 30;
-        if(keys[SDL_SCANCODE_RIGHT])
-            colorShift += 65;
-        if(keys[SDL_SCANCODE_UP])
-            colorShift -= 50;
-        if(keys[SDL_SCANCODE_DOWN])
-            colorShift += 90;
-        if(keys[SDL_SCANCODE_ESCAPE])
-            quit = true;
-
-        SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 80 + colorShift, 180 - colorShift, 130 + colorShift));
-        SDL_FillRect(temp, NULL, SDL_MapRGB(temp->format, 40 + colorShift, 80 + colorShift, 120 - colorShift));
-
-        if(temp) {
-            SDL_Rect rec;
-            rec.x = 40;
-            rec.y = 40;
-            SDL_BlitSurface(temp, NULL, screen, &rec);
-        }
-
-        SDL_UpdateWindowSurface(window);
-    }
-
-    close();
-    return 0;
 }
