@@ -1,6 +1,7 @@
+#include <SDL.h>
+#include <SDL_image.h>
 #include <stdio.h>
 #include <string>
-#include <SDL.h>
 #include <conio.h>
 
 #define WIDTH 800
@@ -81,7 +82,7 @@ int main(int argc, char **argv) {
 
 
 bool loadBMP(SDL_Surface *&surface, string path) {
-    surface = SDL_LoadBMP(path.c_str());
+    surface = IMG_Load(path.c_str());
     if(!surface) {
         printf(SDL_GetError());
         return false;
@@ -102,13 +103,25 @@ bool init() {
         return false;
     }
 
+    //should be freed if error occurs
     window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
     if(!window) {
         printf("Window could not be created: %s", SDL_GetError());
         SDL_Quit();
         return false;
     }
+
+    //freed automatically
     screen = SDL_GetWindowSurface(window);
+
+    int flags = IMG_INIT_JPG | IMG_INIT_PNG;
+
+    if(!(IMG_Init(flags) & flags)) {
+        printf("SDL_image error: %s", IMG_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return false;
+    }
 
     return true;
 }
@@ -126,6 +139,7 @@ void close() {
     SDL_DestroyWindow(window);
     window = NULL;
 
+    IMG_Quit();
     SDL_Quit();
 }
 
@@ -136,8 +150,8 @@ bool loadMedia() {
         is_good = false;
     if(!loadBMP(player, "player.bmp"))
         is_good = false;
-    if(!scaleImage(player,96,48))
-        is_good=false;
+    if(!scaleImage(player, 96, 48))
+        is_good = false;
 
     square = SDL_CreateRGBSurface(0, 40, 40, 32, 0, 0, 0, 0);
     SDL_FillRect(square, NULL, SDL_MapRGB(square->format, 40, 80, 120));
@@ -159,7 +173,7 @@ bool scaleImage(SDL_Surface *&og, int newWidth, int newHeight) {
     rec.w = newWidth;
     rec.h = newHeight;
 
-    if(SDL_BlitScaled(og, NULL, newImage, &rec)<0){
+    if(SDL_BlitScaled(og, NULL, newImage, &rec) < 0) {
         SDL_FreeSurface(newImage);
         printf("Image could not be scaled: %s", SDL_GetError());
         return false;
