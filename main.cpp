@@ -10,17 +10,16 @@
 
 using namespace std;
 
+SDL_Renderer *renderer = NULL;
 SDL_Window *window = NULL;
-SDL_Surface *screen = NULL;
-SDL_Surface *bmp = NULL;
-SDL_Surface *square = NULL;
-SDL_Surface *player = NULL;
+SDL_Texture *bmp = NULL;
+SDL_Texture *player = NULL;
 
 bool init();
 void close();
-bool loadBMP(SDL_Surface *&surface, string path);
+bool loadTexture(SDL_Texture *&texture, string path);
 bool loadMedia();
-bool scaleImage(SDL_Surface *&original, int newWidth, int newHeight);
+bool scaleSurface(SDL_Surface *&original, int newWidth, int newHeight);
 
 int main(int argc, char **argv) {
     if(!init()) {
@@ -39,6 +38,8 @@ int main(int argc, char **argv) {
     SDL_Rect rec;
     rec.x = 40;
     rec.y = 40;
+    rec.w = 48;
+    rec.h = 96;
 
     bool quit = false;
     while(!quit) {
@@ -48,32 +49,28 @@ int main(int argc, char **argv) {
                 quit = true;
         }
 
-        int colorShift = 0;
         const Uint8* keys = SDL_GetKeyboardState(NULL);
 
         if(keys[SDL_SCANCODE_LEFT]) {
-            colorShift -= 30;
             rec.x--;
         }
         if(keys[SDL_SCANCODE_RIGHT]) {
-            colorShift += 65;
             rec.x++;
         }
         if(keys[SDL_SCANCODE_UP]) {
-            colorShift -= 50;
             rec.y--;
         }
         if(keys[SDL_SCANCODE_DOWN]) {
-            colorShift += 90;
             rec.y++;
         }
         if(keys[SDL_SCANCODE_ESCAPE])
             quit = true;
 
-        SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 80, 180, 130));
-        SDL_BlitSurface(player, NULL, screen, &rec);
+        SDL_RenderClear(renderer);
 
-        SDL_UpdateWindowSurface(window);
+        SDL_RenderCopy(renderer, player, NULL, &rec);
+
+        SDL_RenderPresent(renderer);
     }
 
     close();
@@ -81,19 +78,23 @@ int main(int argc, char **argv) {
 }
 
 
-bool loadBMP(SDL_Surface *&surface, string path) {
-    surface = IMG_Load(path.c_str());
+bool loadTexture(SDL_Texture *&texture, string path) {
+    SDL_Surface *surface = IMG_Load(path.c_str()); //should be freed on error
+
     if(!surface) {
-        printf(SDL_GetError());
-        return false;
-    }
-    SDL_Surface *optimized = SDL_ConvertSurface(surface, surface->format, 0);
-    if(!optimized) {
-        SDL_FreeSurface(surface);
-        printf(SDL_GetError());
+        printf("%s", IMG_GetError());
         return false;
     }
 
+    SDL_Texture *temp = SDL_CreateTextureFromSurface(renderer, surface);
+
+    if(!temp) {
+        SDL_FreeSurface(surface);
+        printf("%s", SDL_GetError());
+        return false;
+    }
+
+    texture = temp;
     return true;
 }
 
@@ -111,9 +112,6 @@ bool init() {
         return false;
     }
 
-    //freed automatically
-    screen = SDL_GetWindowSurface(window);
-
     int flags = IMG_INIT_JPG | IMG_INIT_PNG;
 
     if(!(IMG_Init(flags) & flags)) {
@@ -123,21 +121,32 @@ bool init() {
         return false;
     }
 
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if(!renderer) {
+        printf("%s", SDL_GetError());
+        SDL_DestroyWindow(window);
+        IMG_Quit();
+        SDL_Quit();
+        return false;
+    }
+
+    SDL_SetRenderDrawColor(renderer, 255,255,255,255);
+
     return true;
 }
 
 void close() {
-    SDL_FreeSurface(bmp);
+    SDL_DestroyTexture(bmp);
     bmp = NULL;
 
-    SDL_FreeSurface(square);
-    square = NULL;
-
-    SDL_FreeSurface(player);
+    SDL_DestroyTexture(player);
     player = NULL;
 
     SDL_DestroyWindow(window);
     window = NULL;
+
+    SDL_DestroyRenderer(renderer);
+    renderer = NULL;
 
     IMG_Quit();
     SDL_Quit();
@@ -146,20 +155,15 @@ void close() {
 bool loadMedia() {
     bool is_good = true;
 
-    if(!loadBMP(bmp, "alamakota.bmp"))
+    if(!loadTexture(bmp, "alamakota.bmp"))
         is_good = false;
-    if(!loadBMP(player, "player.bmp"))
+    if(!loadTexture(player, "player.bmp"))
         is_good = false;
-    if(!scaleImage(player, 96, 48))
-        is_good = false;
-
-    square = SDL_CreateRGBSurface(0, 40, 40, 32, 0, 0, 0, 0);
-    SDL_FillRect(square, NULL, SDL_MapRGB(square->format, 40, 80, 120));
 
     return is_good;
 }
 
-bool scaleImage(SDL_Surface *&og, int newWidth, int newHeight) {
+bool scaleSurface(SDL_Surface *&og, int newWidth, int newHeight) {
     SDL_Surface *newImage = SDL_CreateRGBSurface(0, newWidth, newHeight, 32, og->format->Rmask, og->format->Gmask, og->format->Bmask, og->format->Amask);
 
     if(!newImage) {
