@@ -4,6 +4,8 @@
 #include <string>
 #include <conio.h>
 
+#include "Texture.h"
+
 #define WIDTH 800
 #define HEIGHT 600
 #define WINDOW_TITLE "WINDOW"
@@ -12,14 +14,12 @@ using namespace std;
 
 SDL_Renderer *renderer = NULL;
 SDL_Window *window = NULL;
-SDL_Texture *bmp = NULL;
-SDL_Texture *player = NULL;
+Texture *player = NULL;
 
 bool init();
 void close();
 bool loadTexture(SDL_Texture *&texture, string path);
 bool loadMedia();
-bool scaleSurface(SDL_Surface *&original, int newWidth, int newHeight);
 
 int main(int argc, char **argv) {
     if(!init()) {
@@ -35,12 +35,6 @@ int main(int argc, char **argv) {
 
     SDL_Event e;
 
-    SDL_Rect rec;
-    rec.x = 40;
-    rec.y = 40;
-    rec.w = 48;
-    rec.h = 96;
-
     bool quit = false;
     while(!quit) {
 
@@ -51,51 +45,38 @@ int main(int argc, char **argv) {
 
         const Uint8* keys = SDL_GetKeyboardState(NULL);
 
-        if(keys[SDL_SCANCODE_LEFT]) {
-            rec.x--;
+        if(keys[SDL_SCANCODE_A]) {
+            if(player->x > 0)
+                player->x--;
         }
-        if(keys[SDL_SCANCODE_RIGHT]) {
-            rec.x++;
+        if(keys[SDL_SCANCODE_D]) {
+            if(player->x < WIDTH - player->width)
+                player->x++;
         }
-        if(keys[SDL_SCANCODE_UP]) {
-            rec.y--;
+        if(keys[SDL_SCANCODE_W]) {
+            if(player->y > 0)
+                player->y--;
         }
-        if(keys[SDL_SCANCODE_DOWN]) {
-            rec.y++;
+        if(keys[SDL_SCANCODE_S]) {
+            if(player->y < HEIGHT - player->height)
+                player->y++;
         }
         if(keys[SDL_SCANCODE_ESCAPE])
             quit = true;
+        if(keys[SDL_SCANCODE_R]) {
 
+        }
+
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
-        SDL_RenderCopy(renderer, player, NULL, &rec);
+        player->render();
 
         SDL_RenderPresent(renderer);
     }
 
     close();
     return 0;
-}
-
-
-bool loadTexture(SDL_Texture *&texture, string path) {
-    SDL_Surface *surface = IMG_Load(path.c_str()); //should be freed on error
-
-    if(!surface) {
-        printf("%s", IMG_GetError());
-        return false;
-    }
-
-    SDL_Texture *temp = SDL_CreateTextureFromSurface(renderer, surface);
-
-    if(!temp) {
-        SDL_FreeSurface(surface);
-        printf("%s", SDL_GetError());
-        return false;
-    }
-
-    texture = temp;
-    return true;
 }
 
 bool init() {
@@ -130,16 +111,11 @@ bool init() {
         return false;
     }
 
-    SDL_SetRenderDrawColor(renderer, 255,255,255,255);
-
     return true;
 }
 
 void close() {
-    SDL_DestroyTexture(bmp);
-    bmp = NULL;
-
-    SDL_DestroyTexture(player);
+    player->destroy();
     player = NULL;
 
     SDL_DestroyWindow(window);
@@ -155,36 +131,8 @@ void close() {
 bool loadMedia() {
     bool is_good = true;
 
-    if(!loadTexture(bmp, "alamakota.bmp"))
-        is_good = false;
-    if(!loadTexture(player, "player.bmp"))
-        is_good = false;
+    player = new Texture(30, 100, renderer);
+    is_good = player->loadTexture("player.png") && is_good;
 
     return is_good;
-}
-
-bool scaleSurface(SDL_Surface *&og, int newWidth, int newHeight) {
-    SDL_Surface *newImage = SDL_CreateRGBSurface(0, newWidth, newHeight, 32, og->format->Rmask, og->format->Gmask, og->format->Bmask, og->format->Amask);
-
-    if(!newImage) {
-        printf("Image could not be scaled: %s", SDL_GetError());
-        return false;
-    }
-
-    SDL_Rect rec;
-    rec.x = 0;
-    rec.y = 0;
-    rec.w = newWidth;
-    rec.h = newHeight;
-
-    if(SDL_BlitScaled(og, NULL, newImage, &rec) < 0) {
-        SDL_FreeSurface(newImage);
-        printf("Image could not be scaled: %s", SDL_GetError());
-        return false;
-    }
-
-    SDL_FreeSurface(og);
-    og = newImage;
-
-    return true;
 }

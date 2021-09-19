@@ -1,12 +1,13 @@
 # depslib dependency file v1.0
 8519680 
 
-1631995017 source:d:\codeblocks\projects\sdl2_project\main.cpp
+1632087907 source:d:\codeblocks\projects\sdl2_project\main.cpp
 	<SDL.h>
 	<SDL_image.h>
 	<stdio.h>
 	<string>
 	<conio.h>
+	"Texture.h"
 
 1631799572 ent of cdf3683 (Added some basic keyboard input)
 	<stdio.h>
@@ -391,4 +392,19 @@
 	"SDL_version.h"
 	"begin_code.h"
 	"close_code.h"
+
+1632087898 source:d:\codeblocks\projects\sdl2_project\src\texture.cpp
+	"Texture.h"
+
+1632087887 d:\codeblocks\projects\sdl2_project\include\texture.h
+	<SDL.h>
+	<SDL_image.h>
+	<string>
+
+1632083290 d:\codeblocks\projects\sdl2_project\main.cpp
+	<SDL.h>
+	<SDL_image.h>
+	<stdio.h>
+	<string>
+	<conio.h>
 
