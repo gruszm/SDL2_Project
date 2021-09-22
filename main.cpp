@@ -46,26 +46,29 @@ int main(int argc, char **argv) {
         const Uint8* keys = SDL_GetKeyboardState(NULL);
 
         if(keys[SDL_SCANCODE_A]) {
-            if(player->x > 0)
-                player->x--;
+            if(player->getX() > 0)
+                player->move(-1, 0);
         }
         if(keys[SDL_SCANCODE_D]) {
-            if(player->x < WIDTH - player->width)
-                player->x++;
+            if(player->getX() < WIDTH - player->getWidth())
+                player->move(1, 0);
         }
         if(keys[SDL_SCANCODE_W]) {
-            if(player->y > 0)
-                player->y--;
+            if(player->getY() > 0)
+                player->move(0, -1);
         }
         if(keys[SDL_SCANCODE_S]) {
-            if(player->y < HEIGHT - player->height)
-                player->y++;
+            if(player->getY() < HEIGHT - player->getHeight())
+                player->move(0, 1);
         }
         if(keys[SDL_SCANCODE_ESCAPE])
             quit = true;
-        if(keys[SDL_SCANCODE_R]) {
+        if(keys[SDL_SCANCODE_MINUS])
+            player->setAlpha(player->getAlpha()-1);
+        if(keys[SDL_SCANCODE_EQUALS])
+            player->setAlpha(player->getAlpha()+1);
 
-        }
+        printf("%d\n", player->getAlpha());
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
@@ -133,6 +136,7 @@ bool loadMedia() {
 
     player = new Texture(30, 100, renderer);
     is_good = player->loadTexture("player.png") && is_good;
+    player->setBlendMode(SDL_BLENDMODE_BLEND);
 
     return is_good;
 }

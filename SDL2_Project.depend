@@ -1,7 +1,7 @@
 # depslib dependency file v1.0
 8519680 
 
-1632087907 source:d:\codeblocks\projects\sdl2_project\main.cpp
+1632332768 source:d:\codeblocks\projects\sdl2_project\main.cpp
 	<SDL.h>
 	<SDL_image.h>
 	<stdio.h>
@@ -393,10 +393,10 @@
 	"begin_code.h"
 	"close_code.h"
 
-1632087898 source:d:\codeblocks\projects\sdl2_project\src\texture.cpp
+1632333385 source:d:\codeblocks\projects\sdl2_project\src\texture.cpp
 	"Texture.h"
 
-1632087887 d:\codeblocks\projects\sdl2_project\include\texture.h
+1632332187 d:\codeblocks\projects\sdl2_project\include\texture.h
 	<SDL.h>
 	<SDL_image.h>
 	<string>
