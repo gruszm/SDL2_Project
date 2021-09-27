@@ -1,5 +1,4 @@
 #include <SDL.h>
-#include <SDL_image.h>
 #include <stdio.h>
 #include <string>
 #include <conio.h>
@@ -10,11 +9,11 @@
 #define HEIGHT 600
 #define WINDOW_TITLE "WINDOW"
 
-using namespace std;
-
 SDL_Renderer *renderer = NULL;
 SDL_Window *window = NULL;
-Texture *player = NULL;
+TTF_Font *font = NULL;
+Texture *textTexture = NULL;
+Texture *playerTexture = NULL;
 
 bool init();
 void close();
@@ -46,41 +45,36 @@ int main(int argc, char **argv) {
         const Uint8* keys = SDL_GetKeyboardState(NULL);
 
         if(keys[SDL_SCANCODE_A]) {
-            if(player->getX() > 0)
-                player->move(-1, 0);
+            if(playerTexture->getX() > 0)
+                playerTexture->move(-10, 0);
         }
         if(keys[SDL_SCANCODE_D]) {
-            if(player->getX() < WIDTH - player->getWidth())
-                player->move(1, 0);
+            if(playerTexture->getX() < WIDTH - playerTexture->getWidth())
+                playerTexture->move(10, 0);
         }
         if(keys[SDL_SCANCODE_W]) {
-            if(player->getY() > 0)
-                player->move(0, -1);
+            if(playerTexture->getY() > 0)
+                playerTexture->move(0, -10);
         }
         if(keys[SDL_SCANCODE_S]) {
-            if(player->getY() < HEIGHT - player->getHeight())
-                player->move(0, 1);
+            if(playerTexture->getY() < HEIGHT - playerTexture->getHeight())
+                playerTexture->move(0, 10);
         }
         if(keys[SDL_SCANCODE_ESCAPE])
             quit = true;
-        if(keys[SDL_SCANCODE_MINUS])
-            player->setAlpha(player->getAlpha()-1);
-        if(keys[SDL_SCANCODE_EQUALS])
-            player->setAlpha(player->getAlpha()+1);
-
-        printf("%d\n", player->getAlpha());
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
-        player->render();
+        textTexture->render();
+        playerTexture->render();
 
         SDL_RenderPresent(renderer);
     }
 
     close();
     return 0;
-}
+};
 
 bool init() {
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -92,20 +86,24 @@ bool init() {
     window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
     if(!window) {
         printf("Window could not be created: %s", SDL_GetError());
-        SDL_Quit();
+        close();
         return false;
     }
 
     int flags = IMG_INIT_JPG | IMG_INIT_PNG;
-
     if(!(IMG_Init(flags) & flags)) {
         printf("SDL_image error: %s", IMG_GetError());
-        SDL_DestroyWindow(window);
-        SDL_Quit();
+        close();
         return false;
     }
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if(TTF_Init() == -1) {
+        printf("SDL_ttf error: %s", TTF_GetError());
+        close();
+        return false;
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if(!renderer) {
         printf("%s", SDL_GetError());
         SDL_DestroyWindow(window);
@@ -118,8 +116,11 @@ bool init() {
 }
 
 void close() {
-    player->destroy();
-    player = NULL;
+    destroyTexture(playerTexture);
+    destroyTexture(textTexture);
+
+    TTF_CloseFont(font);
+    font = NULL;
 
     SDL_DestroyWindow(window);
     window = NULL;
@@ -127,6 +128,7 @@ void close() {
     SDL_DestroyRenderer(renderer);
     renderer = NULL;
 
+    TTF_Quit();
     IMG_Quit();
     SDL_Quit();
 }
@@ -134,9 +136,28 @@ void close() {
 bool loadMedia() {
     bool is_good = true;
 
-    player = new Texture(30, 100, renderer);
-    is_good = player->loadTexture("player.png") && is_good;
-    player->setBlendMode(SDL_BLENDMODE_BLEND);
+    //to be placed elsewhere
+    font = TTF_OpenFont("ITCKRIST.TTF", 28);
+    if(!font) {
+        printf("%s", TTF_GetError());
+        is_good = false;
+    }
+
+    playerTexture = new Texture(30, 100, renderer);
+    is_good = playerTexture->loadTexture("player.png") && is_good;
+
+    if(is_good)
+        playerTexture->setBlendMode(SDL_BLENDMODE_BLEND);
+
+    if(is_good) {
+        textTexture = new Texture(300, 300, renderer);
+
+        SDL_Color color;
+        color.r = 200;
+        color.g = 120;
+        color.b = 150;
+        is_good = textTexture->createTextureFromText(font, "ALA MA KOTA", color) && is_good;
+    }
 
     return is_good;
 }

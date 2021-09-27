@@ -3,11 +3,14 @@
 
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 #include <string>
 
 using namespace std;
 
 class Texture {
+    friend void destroyTexture(Texture *&t);
+
 public:
     Texture(int x, int y, SDL_Renderer *renderer);
     virtual ~Texture();
@@ -16,8 +19,8 @@ public:
 
     //tools
     bool loadTexture(string path);
+    bool createTextureFromText(TTF_Font *font, string text, SDL_Color color);
     void render();
-    void destroy();
     void setColorMod(Uint8 r, Uint8 g, Uint8 b);
     void setBlendMode(SDL_BlendMode blendMode);
     void setAlpha(int alpha);
@@ -32,11 +35,15 @@ public:
 protected:
 
 private:
-    int x, y; //destroy(): should be set to 0
-    int width, height; //destroy(): should be set to 0
+    int x, y;
+    int width, height;
     Uint8 alphaValue;
-    SDL_Texture *sdl_texture; //destroy(): should be destroyed
-    SDL_Renderer *renderer; //destroy(): should be NULLed
+    SDL_Texture *sdl_texture; //free(): should be destroyed
+    SDL_Renderer *renderer;
+    void freeTexture(); //free texture if allocated
+    void destroy();
 };
+
+void destroyTexture(Texture *&t);
 
 #endif // TEXTURE_H

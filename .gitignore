@@ -31,4 +31,4 @@
 *.out
 *.app
 SDL2_Project.layout
-SDL2_Project.layout
+bin/

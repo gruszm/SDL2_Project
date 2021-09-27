@@ -1,5 +1,13 @@
 #include "Texture.h"
 
+void destroyTexture(Texture *&t){
+    if(!t)
+        return;
+
+    t->destroy();
+    t = NULL;
+}
+
 Texture::Texture(int x, int y, SDL_Renderer *renderer)
     :
     x(x),
@@ -13,6 +21,8 @@ Texture::~Texture() {
 }
 
 bool Texture::loadTexture(string path) {
+    freeTexture(); //free if allocated earlier
+
     SDL_Surface *surface = IMG_Load(path.c_str()); //should be freed on error
 
     if(!surface) {
@@ -42,15 +52,15 @@ void Texture::render() {
     SDL_RenderCopy(renderer, sdl_texture, NULL, &rec);
 }
 
+void Texture::freeTexture() {
+    if(sdl_texture) {
+        SDL_DestroyTexture(sdl_texture);
+        sdl_texture = NULL;
+    }
+}
+
 void Texture::destroy() {
-    width = 0;
-    height = 0;
-
-    SDL_DestroyTexture(sdl_texture);
-    sdl_texture = NULL;
-
-    renderer = NULL;
-
+    freeTexture();
     delete this;
 }
 
@@ -81,9 +91,32 @@ void Texture::setAlpha(int alpha) {
     SDL_SetTextureAlphaMod(this->sdl_texture, finalAlpha);
 }
 
-Uint8 Texture::getAlpha() {
-    return this->alphaValue;
+bool Texture::createTextureFromText(TTF_Font *font, string text, SDL_Color color) {
+    freeTexture();
+
+    SDL_Surface *surf = TTF_RenderText_Solid(font, text.c_str(), color);
+    if(!surf) {
+        printf("%s", TTF_GetError());
+        return false;
+    }
+
+    SDL_Texture *temp = SDL_CreateTextureFromSurface(renderer, surf);
+    if(!temp) {
+        printf("%s", SDL_GetError());
+        SDL_FreeSurface(surf);
+        return false;
+    }
+
+    this->width = surf->w;
+    this->height = surf->h;
+
+    SDL_FreeSurface(surf);
+
+    this->sdl_texture = temp;
+
+    return true;
 }
+
 
 //getters and setters for variables
 
@@ -101,4 +134,8 @@ int Texture::getWidth() {
 
 int Texture::getHeight() {
     return height;
+}
+
+Uint8 Texture::getAlpha() {
+    return this->alphaValue;
 }
